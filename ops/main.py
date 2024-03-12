@@ -458,6 +458,8 @@ def main(charm_class: Type[ops.charm.CharmBase],
         ops.charm._evaluate_status(charm)
 
         framework.commit()
+    except ops.model.ModelError as e:
+        raise RuntimeError(f'{e}')
     finally:
         framework.close()
 

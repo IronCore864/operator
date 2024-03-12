@@ -705,7 +705,11 @@ class Framework(Object):
         # modifications in on_commit handlers of instances of other classes will not be persisted.
         self.on.commit.emit()
         # Save our event count after all events have been emitted.
-        self.save_snapshot(self._stored)
+        try:
+            self.save_snapshot(self._stored)
+        except ValueError as e:
+            from ops.model import ModelError
+            raise ModelError('cannot store complex data {!r}'.format(e))
         self._storage.commit()
 
     def register_type(self, cls: Type[Serializable], parent: Optional[Union['Handle', 'Object']],
