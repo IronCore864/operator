@@ -183,6 +183,10 @@ convention = "google"
 [tool.ruff.lint.flake8-builtins]
 builtins-ignorelist = ["id", "min", "map", "range", "type", "TimeoutError", "ConnectionError", "Warning", "input", "format"]
 
+# Ruff formatter configuration
+[tool.ruff.format]
+quote-style = "single"
+
 [tool.pyright]
 include = ["ops/*.py", "ops/_private/*.py", "test/*.py", "test/charms/*/src/*.py"]
 pythonVersion = "3.8" # check no python > 3.8 features are used
