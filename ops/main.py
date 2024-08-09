@@ -77,43 +77,6 @@ class _JujuContext:
         return key in self.env_vars
 
 
-# class _JujuContext:
-#     def __init__(self):
-#         # source: https://juju.is/docs/juju/charm-environment-variables
-#         # the HookVars function: https://github.com/juju/juju/blob/3.6/worker/uniter/runner/context/context.go#L1398
-#         # only allow accesing these vars because these are the currently used vars in main.py
-#         self.env_vars = [
-#             'JUJU_ACTION_NAME',
-#             'JUJU_ACTION_UUID',
-#             'JUJU_CHARM_DIR',
-#             'JUJU_DEBUG',
-#             'JUJU_DEPARTING_UNIT',
-#             'JUJU_DISPATCH_PATH',
-#             'JUJU_NOTICE_ID',
-#             'JUJU_NOTICE_KEY',
-#             'JUJU_NOTICE_TYPE',
-#             'JUJU_PEBBLE_CHECK_NAME',
-#             'JUJU_RELATION',
-#             'JUJU_RELATION_ID',
-#             'JUJU_REMOTE_APP',
-#             'JUJU_REMOTE_UNIT',
-#             'JUJU_SECRET_ID',
-#             'JUJU_SECRET_LABEL',
-#             'JUJU_SECRET_REVISION',
-#             'JUJU_STORAGE_ID',
-#             'JUJU_WORKLOAD_NAME',
-#             'OPERATOR_DISPATCH',
-#         ]
-
-#     def __getattr__(self, key: str) -> str:
-#         if key in self.env_vars:
-#             return os.environ.get(key) or ''
-#         return ''
-
-#     def __contains__(self, key: str):
-#         return key in self.env_vars and key in os.environ
-
-
 def _exe_path(path: Path) -> Optional[Path]:
     """Find and return the full path to the given binary.
 
