@@ -10,10 +10,16 @@ import pytest
 from ops import PebbleCustomNoticeEvent, PebbleReadyEvent, pebble
 from ops.charm import CharmBase
 from ops.framework import Framework
-from ops.pebble import ExecError, Layer, ServiceStartup, ServiceStatus
+from ops.pebble import (
+    ExecError,
+    Layer,
+    LocalIdentity,
+    ServiceStartup,
+    ServiceStatus,
+)
 
 from scenario import Context
-from scenario.state import CheckInfo, Container, Exec, Mount, Notice, State
+from scenario.state import CheckInfo, Container, Exec, Identity, Mount, Notice, State
 from ..helpers import jsonpatch_delta, trigger
 
 
@@ -848,3 +854,32 @@ def test_layers_merge_in_plan(layer1_name, layer2_name):
     assert log_target.labels == {'foo': 'bar'}
     assert log_target.override == 'merge'
     assert log_target.location == 'https://loki2.example.com'
+
+
+def test_pebble_identities(charm_cls):
+    identities = {
+        'foo': Identity('admin', local=42),
+        'bar': Identity('metrics', basic='hashed password'),
+    }
+
+    container = Container(name='foo', can_connect=True, identities=identities)
+
+    state = State(containers={container})
+
+    ctx = Context(charm_cls, meta={'name': 'foo', 'containers': {'foo': {}}})
+
+    with ctx(ctx.on.start(), state=state) as mgr:
+        container = mgr.charm.unit.get_container('foo')
+        assert container.pebble.get_identities()['foo'].access == 'admin'
+        assert container.pebble.get_identities()['foo'].local.user_id == 42
+        assert container.pebble.get_identities()['bar'].access == 'metrics'
+        assert container.pebble.get_identities()['bar'].basic.password == 'hashed password'
+
+        new_identities = {
+            'foo': pebble.Identity(access='admin', local=LocalIdentity(user_id=1000)),
+        }
+        container.pebble.replace_identities(new_identities)
+        assert container.pebble.get_identities()['foo'].local.user_id == 1000
+
+        container.pebble.remove_identities({'foo'})
+        assert 'foo' not in container.pebble.get_identities()

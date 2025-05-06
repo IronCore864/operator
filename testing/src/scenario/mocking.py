@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
+    Iterable,
     Literal,
     Mapping,
     NoReturn,
@@ -51,6 +52,7 @@ from .logger import logger as scenario_logger
 from .state import (
     CharmType,
     CheckInfo,
+    Identity,
     JujuLogLine,
     Mount,
     Network,
@@ -988,3 +990,34 @@ class _MockPebbleClient(_TestingPebbleClient):
                 f'can_connect=True for container {self._container.name}?'
             )
             raise pebble.ConnectionError(msg)
+
+    def get_identities(self) -> dict[str, pebble.Identity]:
+        return {name: identity._to_ops() for name, identity in self._container.identities.items()}
+
+    def replace_identities(
+        self, identities: Mapping[str, pebble.IdentityDict | pebble.Identity | None]
+    ) -> None:
+        for name, identity in identities.items():
+            if identity is None:
+                del self._container.identities[name]
+            elif isinstance(identity, pebble.Identity):
+                local = None
+                if identity.local is not None:
+                    local = identity.local.user_id
+                basic = None
+                if identity.basic is not None:
+                    basic = identity.basic.password
+                self._container.identities[name] = Identity(
+                    identity.access, local=local, basic=basic
+                )
+            elif isinstance(identity, dict):
+                new_identity = Identity(identity['access'])
+                if 'local' in identity:
+                    new_identity.local = identity['local']['user-id']
+                if 'basic' in identity:
+                    new_identity.basic = identity['basic']['password']
+                self._container.identities[name] = new_identity
+
+    def remove_identities(self, identities: Iterable[str]) -> None:
+        for name in identities:
+            del self._container.identities[name]
