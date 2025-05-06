@@ -1049,18 +1049,14 @@ class Container(_max_posargs(1)):
 
     For example::
 
-        identities = {
-            'web': Identity(
-                access='metrics',
-                basic=BasicIdentity(password='hashed password'),
-            ),
-        }
+        identities = {'web': Identity('metrics', basic='hashed password')}
         container = Container(name='foo', can_connect=True, identities=identities)
         state = State(containers={container})
         ctx = Context(MyCharm, meta={'name': 'foo', 'containers': {'foo': {}}})
         with ctx(ctx.on.start(), state=state) as mgr:
             container = mgr.charm.unit.get_container('foo')
-            assert container.pebble.get_identities() == identities
+            assert container.pebble.get_identities()['foo'].access == 'metrics'
+            assert container.pebble.get_identities()['foo'].basic.password == 'hashed password'
 
     """
 
