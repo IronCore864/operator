@@ -938,6 +938,31 @@ class CheckInfo(_max_posargs(1)):
         )
 
 
+@dataclasses.dataclass
+class Identity:
+    """A Pebble identity."""
+
+    access: Literal['untrusted', 'metrics', 'read', 'admin']
+    local: int | None = None
+    basic: str | None = None
+
+    def __post_init__(self) -> None:
+        """Validate that at least one of local or basic is provided."""
+        if self.local is None and self.basic is None:
+            raise ValueError('at least one of "local" or "basic" must be provided')
+
+    def _to_ops(self) -> pebble.Identity:
+        local_identity = None
+        if self.local is not None:
+            local_identity = pebble.LocalIdentity(user_id=self.local)
+
+        basic_identity = None
+        if self.basic is not None:
+            basic_identity = pebble.BasicIdentity(password=self.basic)
+
+        return pebble.Identity(access=self.access, local=local_identity, basic=basic_identity)
+
+
 @dataclasses.dataclass(frozen=True)
 class Container(_max_posargs(1)):
     """A Kubernetes container where a charm's workload runs."""
@@ -1019,7 +1044,7 @@ class Container(_max_posargs(1)):
     check_infos: frozenset[CheckInfo] = frozenset()
     """All Pebble health checks that have been added to the container."""
 
-    identities: Mapping[str, pebble.Identity] = dataclasses.field(default_factory=dict)
+    identities: Mapping[str, Identity] = dataclasses.field(default_factory=dict)
     """Simulate Pebble identities.
 
     For example::

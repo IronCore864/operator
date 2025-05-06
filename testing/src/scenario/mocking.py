@@ -52,6 +52,7 @@ from .logger import logger as scenario_logger
 from .state import (
     CharmType,
     CheckInfo,
+    Identity,
     JujuLogLine,
     Mount,
     Network,
@@ -989,7 +990,7 @@ class _MockPebbleClient(_TestingPebbleClient):
             raise pebble.ConnectionError(msg)
 
     def get_identities(self) -> dict[str, pebble.Identity]:
-        return self._container.identities
+        return {name: identity._to_ops() for name, identity in self._container.identities.items()}
 
     def replace_identities(
         self, identities: Mapping[str, pebble.IdentityDict | pebble.Identity | None]
@@ -998,10 +999,23 @@ class _MockPebbleClient(_TestingPebbleClient):
             if identity is None:
                 del self._container.identities[name]
             elif isinstance(identity, pebble.Identity):
-                self._container.identities[name] = identity
+                local = None
+                if identity.local is not None:
+                    local = identity.local.user_id
+                basic = None
+                if identity.basic is not None:
+                    basic = identity.basic.password
+                self._container.identities[name] = Identity(
+                    identity.access, local=local, basic=basic
+                )
             elif isinstance(identity, dict):
-                self._container.identities[name] = pebble.Identity.from_dict(identity)
+                new_identity = Identity(identity['access'])
+                if 'local' in identity:
+                    new_identity.local = identity['local']['user-id']
+                if 'basic' in identity:
+                    new_identity.basic = identity['basic']['password']
+                self._container.identities[name] = new_identity
 
     def remove_identities(self, identities: Iterable[str]) -> None:
-        for identity in identities:
-            del self._container.identities[identity]
+        for name in identities:
+            del self._container.identities[name]

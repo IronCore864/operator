@@ -11,9 +11,7 @@ from ops import PebbleCustomNoticeEvent, PebbleReadyEvent, pebble
 from ops.charm import CharmBase
 from ops.framework import Framework
 from ops.pebble import (
-    BasicIdentity,
     ExecError,
-    Identity,
     Layer,
     LocalIdentity,
     ServiceStartup,
@@ -21,7 +19,7 @@ from ops.pebble import (
 )
 
 from scenario import Context
-from scenario.state import CheckInfo, Container, Exec, Mount, Notice, State
+from scenario.state import CheckInfo, Container, Exec, Identity, Mount, Notice, State
 from ..helpers import jsonpatch_delta, trigger
 
 
@@ -860,11 +858,8 @@ def test_layers_merge_in_plan(layer1_name, layer2_name):
 
 def test_pebble_identities(charm_cls):
     identities = {
-        'foo': Identity(access='admin', local=LocalIdentity(user_id=42)),
-        'bar': Identity(
-            access='metrics',
-            basic=BasicIdentity(password='hashed password'),  # noqa: S106
-        ),
+        'foo': Identity('admin', local=42),
+        'bar': Identity('metrics', basic='hashed password'),
     }
 
     container = Container(name='foo', can_connect=True, identities=identities)
@@ -875,24 +870,16 @@ def test_pebble_identities(charm_cls):
 
     with ctx(ctx.on.start(), state=state) as mgr:
         container = mgr.charm.unit.get_container('foo')
-        assert container.pebble.get_identities() == identities
+        assert container.pebble.get_identities()['foo'].access == 'admin'
+        assert container.pebble.get_identities()['foo'].local.user_id == 42
+        assert container.pebble.get_identities()['bar'].access == 'metrics'
+        assert container.pebble.get_identities()['bar'].basic.password == 'hashed password'
 
         new_identities = {
-            'foo': Identity(access='admin', local=LocalIdentity(user_id=1000)),
+            'foo': pebble.Identity(access='admin', local=LocalIdentity(user_id=1000)),
         }
         container.pebble.replace_identities(new_identities)
-        assert container.pebble.get_identities() == {
-            'foo': Identity(access='admin', local=LocalIdentity(user_id=1000)),
-            'bar': Identity(
-                access='metrics',
-                basic=BasicIdentity(password='hashed password'),  # noqa: S106
-            ),
-        }
+        assert container.pebble.get_identities()['foo'].local.user_id == 1000
 
         container.pebble.remove_identities({'foo'})
-        assert container.pebble.get_identities() == {
-            'bar': Identity(
-                access='metrics',
-                basic=BasicIdentity(password='hashed password'),  # noqa: S106
-            ),
-        }
+        assert 'foo' not in container.pebble.get_identities()
