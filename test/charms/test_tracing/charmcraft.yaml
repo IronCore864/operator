@@ -12,7 +12,7 @@ platforms:
 
 parts:
     test-tracing:
-        plugin: charm
+        plugin: uv
         source: .
         build-packages:
             - cargo
