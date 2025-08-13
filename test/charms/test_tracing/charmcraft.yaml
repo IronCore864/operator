@@ -11,6 +11,11 @@ platforms:
     amd64:
 
 parts:
+    uv-deps:
+       source: .
+       plugin: nil
+       build-snaps:
+           - astral-uv
     test-tracing:
         plugin: uv
         source: .
