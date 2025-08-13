@@ -1,14 +1,8 @@
 [project]
 name = "test-tracing"
-version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
+version = "0.0.1"
 requires-python = ">=3.10"
-dependencies = []
 
-[dependency-groups]
-# Dependencies brought from libraries the charm uses.
-charmlibs = [
-    "pydantic",
-    "ops>=3.0.0",
+dependencies = [
+    "ops>=3,<4",
 ]

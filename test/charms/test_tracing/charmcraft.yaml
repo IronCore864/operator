@@ -11,16 +11,11 @@ platforms:
     amd64:
 
 parts:
-    uv-deps:
-       source: .
-       plugin: nil
-       build-snaps:
-           - astral-uv
-    test-tracing:
+    charm:
         plugin: uv
         source: .
-        uv-groups:
-            - charmlibs
+        build-snaps:
+            - astral-uv
 
 requires:
     charm-tracing:
