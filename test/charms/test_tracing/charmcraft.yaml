@@ -14,8 +14,8 @@ parts:
     test-tracing:
         plugin: uv
         source: .
-        build-packages:
-            - cargo
+        uv-groups:
+            - charmlibs
 
 requires:
     charm-tracing:

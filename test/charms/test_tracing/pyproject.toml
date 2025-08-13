@@ -1,0 +1,6 @@
+[dependency-groups]
+# Dependencies brought from libraries the charm uses.
+charmlibs = [
+    "pydantic",
+    "ops>=3.0.0",
+]
